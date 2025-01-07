@@ -1,5 +1,6 @@
 package com.bank.infra.adapter;
 
+import com.bank.domain.model.AccountOperation;
 import com.bank.domain.model.BankAccount;
 import com.bank.domain.port.BankAccountPersistence;
 import com.bank.shared.exception.AccountAlreadyExistsException;
@@ -33,6 +34,13 @@ public class BankAccountRepository implements BankAccountPersistence {
                 .orElseThrow(() -> new BankAccountException(ErrorMessages.ACCOUNT_NOT_FOUND.getMessage(accountId)));
     }
 
+    @Override
+    public void addOperation(UUID accountId, AccountOperation operation) {
+        BankAccount account = findAccountById(accountId);
+        account.updateBalance(operation.balance());
+        account.addOperation(operation);
+
+    }
 
     private Optional<BankAccount> getAccountById(UUID accountId) {
         return accountList.stream()
