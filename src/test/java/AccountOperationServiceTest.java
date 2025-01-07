@@ -2,6 +2,7 @@ import com.bank.domain.model.AccountOperation;
 import com.bank.domain.model.BankAccount;
 import com.bank.domain.port.BankAccountPersistence;
 import com.bank.domain.service.AccountOperationServiceImpl;
+import com.bank.shared.exception.InsufficientFundsException;
 import com.bank.shared.exception.InvalidAmountException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,5 +47,38 @@ public class AccountOperationServiceTest {
         assertThrows(InvalidAmountException.class, () -> accountOperationService.deposit(accountId, amount));
     }
 
+    @Test
+    void testWithdrawValidAmount() {
+        UUID accountId = UUID.randomUUID();
+        double depositAmount = 100.0;
+        double withdrawAmount = 50.0;
+        BankAccount account = new BankAccount(accountId, depositAmount,List.of());
+
+        when(bankAccountPersistence.findAccountById(accountId)).thenReturn(account);
+
+        accountOperationService.withdraw(accountId, withdrawAmount);
+
+        verify(bankAccountPersistence, times(1)).addOperation(eq(accountId), any(AccountOperation.class));
+    }
+
+    @Test
+    void testWithdrawInvalidAmountThrowsException() {
+        UUID accountId = UUID.randomUUID();
+        double withdrawAmount = -50.0;
+
+        assertThrows(InvalidAmountException.class, () -> accountOperationService.withdraw(accountId, withdrawAmount));
+    }
+
+    @Test
+    void testWithdrawInsufficientFundsThrowsException() {
+        UUID accountId = UUID.randomUUID();
+        double depositAmount = 30.0;
+        double withdrawAmount = 50.0;
+        BankAccount account = new BankAccount(accountId, depositAmount,List.of());
+
+        when(bankAccountPersistence.findAccountById(accountId)).thenReturn(account);
+
+        assertThrows(InsufficientFundsException.class, () -> accountOperationService.withdraw(accountId, withdrawAmount));
+    }
 
 }
