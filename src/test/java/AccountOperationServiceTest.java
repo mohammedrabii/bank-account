@@ -1,5 +1,6 @@
 import com.bank.domain.model.AccountOperation;
 import com.bank.domain.model.BankAccount;
+import com.bank.domain.model.enums.OperationType;
 import com.bank.domain.port.BankAccountPersistence;
 import com.bank.domain.service.AccountOperationServiceImpl;
 import com.bank.shared.exception.InsufficientFundsException;
@@ -7,16 +8,19 @@ import com.bank.shared.exception.InvalidAmountException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 
-public class AccountOperationServiceTest {
+class AccountOperationServiceTest {
     private BankAccountPersistence bankAccountPersistence;
     private AccountOperationServiceImpl accountOperationService;
 
@@ -81,4 +85,22 @@ public class AccountOperationServiceTest {
         assertThrows(InsufficientFundsException.class, () -> accountOperationService.withdraw(accountId, withdrawAmount));
     }
 
+    @Test
+    void testGetOperationsHistory() {
+        UUID accountId = UUID.randomUUID();
+        BankAccount account = new BankAccount(accountId, 100.0,new ArrayList<>());
+        AccountOperation operation1 = new AccountOperation(50.0, LocalDateTime.now(), 150.0, OperationType.DEPOSIT);
+        AccountOperation operation2 = new AccountOperation(30.0, LocalDateTime.now(), 120.0, OperationType.WITHDRAWAL);
+
+        account.addOperation(operation1);
+        account.addOperation(operation2);
+
+        when(bankAccountPersistence.getOperations(accountId)).thenReturn(account.getAccountOperations());
+
+        var operations = accountOperationService.getOperationsHistory(accountId);
+
+        assertEquals(2, operations.size());
+        assertEquals(operation1.amount(), operations.get(0).amount());
+        assertEquals(operation2.amount(), operations.get(1).amount());
+    }
 }

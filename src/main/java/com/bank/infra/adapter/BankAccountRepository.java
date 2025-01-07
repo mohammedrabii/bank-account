@@ -42,6 +42,12 @@ public class BankAccountRepository implements BankAccountPersistence {
 
     }
 
+    @Override
+    public List<AccountOperation> getOperations(UUID accountId) {
+        BankAccount account = findAccountById(accountId);
+        return account.getAccountOperations();
+    }
+
     private Optional<BankAccount> getAccountById(UUID accountId) {
         return accountList.stream()
                 .filter(account -> account.getId().equals(accountId))
